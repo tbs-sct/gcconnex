@@ -32,9 +32,59 @@ if ($user->canEdit()) {
     echo '<h2 class="modal-title">' . elgg_echo('gcconnex_profile:basic:header') . '</h2>';
     echo '</header>';
     echo '<div class="panel-body overflow-body" style="padding-top: 15px; padding-bottom: 0;">';
-    echo '<div class="basic-profile-standard-field-wrapper col-md-6 col-xs-12">'; // container for css styling, used to group profile content and display them seperately from other fields
+    echo '<div class="basic-profile-standard-field-wrapper col-md-12 col-xs-12">'; // container for css styling, used to group profile content and display them seperately from other fields
 
-    $fields = array('Name', 'user_type', 'Federal', 'Provincial', 'Institution', 'University', 'College', 'Highschool', 'Municipal', 'International', 'NGO', 'Community', 'Business', 'Media', 'Retired', 'Other', 'Job', 'Location', 'Phone', 'Mobile', 'Website');
+    $fields = array('user_type', 'Federal', 'Provincial', 'Institution', 'University', 'College', 'Highschool', 'Municipal', 'International', 'NGO', 'Community', 'Business', 'Media', 'Retired', 'Other', 'Website');
+
+    $fields_test = array('Name', 'Job', 'JobFr', 'Phone', 'Mobile');
+    $new_address = array('streetAddress', 'city', 'province', 'postalcode', 'country');
+
+    echo '<div class="row mrgn-bttm-md"><div class="col-sm-6"><h4 class="mrgn-tp-0">WIP DIRECTORY INFO</h4></div><div class="col-sm-6"><div class="pull-right"><span class="text-muted mrgn-rght-md">In sync with Directory </span><a href="#" role="button" class="btn btn-primary" target="_blank">Edit Profile in Directory</a></div></div></div>';
+
+    $icon = elgg_view_entity_icon($user, $size, array(
+        'use_hover' => false,
+        'use_link' => false,
+        'class' => 'pro-avatar',
+        'force_size' => true,
+    ));
+
+    echo '<div class="row">';
+    echo '<div class="col-xs-2">'.$icon.'<a href="'.elgg_get_site_url(). 'avatar/edit/' . $user->username.'" class="btn btn-primary btn-block mrgn-tp-md">'. elgg_echo('gcconnex_profile:profile:edit_avatar') .'</a></div>';
+    echo '<div class="col-xs-5">';
+    foreach($fields_test as $field) {
+        $field = strtolower($field);
+        $value = htmlspecialchars_decode($user->get($field));
+
+        echo "<div class='form-group col-xs-12 {$field}'>";
+
+        if($field == 'phone' || $field == 'mobile') {
+            $params = array(
+                'name' => $field,
+                'id' => $field,
+                'class' => 'gcconnex-basic-'.$field,
+                'value' => $value,
+                'type' => 'tel',
+                'pattern' => "^\D?(\d{3})\D?\D?(\d{3})\D?(\d{4})$",
+            );
+        } else {
+            $params = array(
+                'name' => $field,
+                'id' => $field,
+                'class' => 'gcconnex-basic-'.$field,
+                'value' => $value,
+            );
+        }
+        
+        // set up label and input field for the basic profile stuff
+        echo "<label for='{$field}' class='col-sm-4'>" . elgg_echo("gcconnex_profile:basic:{$field}")."</label>";
+        echo '<div class="col-sm-8">'; // field wrapper for css styling
+        echo '<div class="input-group">';
+        echo '<span class="input-group-addon" style="float:none;">S</span>';
+        echo elgg_view("input/text", $params);
+        echo '</div></div></div>';
+    }
+    echo '</div>';
+    echo '<div class="col-xs-5">';
 
     foreach ($fields as $field) {
 
@@ -55,6 +105,8 @@ if ($user->canEdit()) {
             
             echo "<label for='{$field}' class='col-sm-4'>" . elgg_echo("gcconnex_profile:basic:{$field}")."</label>";
             echo '<div class="col-sm-8">';
+            echo '<div class="input-group">';
+            echo '<span class="input-group-addon" style="float:none;">S</span>';
             echo elgg_view('input/select', array(
                 'name' => $field,
                 'id' => $field,
@@ -75,7 +127,7 @@ if ($user->canEdit()) {
                     'other' => elgg_echo('gcconnex-profile-card:other')
                 ),
             ));
-
+            echo '</div>';
             // jquery for the occupation dropdown - institution
     ?>
 
@@ -316,7 +368,7 @@ if ($user->canEdit()) {
             foreach($provincial_departments as $province => $name){
                 $prov_value = ($user->get('provincial') == $province) ? $user->get('ministry'): "";
                 $prov_id = str_replace(" ", "-", strtolower($province));
-                echo '<div class="form-group col-xs-12 occupation-choices provincial-choices" id="' . $prov_id . '-wrapper"><label for="' . $prov_id . '-choices" class="col-sm-4">' . elgg_echo('gcconnex_profile:basic:ministry') . '</label><div class="col-sm-8">';
+                echo '<div class="form-group col-xs-6 occupation-choices provincial-choices" id="' . $prov_id . '-wrapper"><label for="' . $prov_id . '-choices" class="col-sm-4">' . elgg_echo('gcconnex_profile:basic:ministry') . '</label><div class="col-sm-8">';
                 echo elgg_view('input/select', array(
                     'name' => 'ministry',
                     'id' => $prov_id . '-choices',
@@ -458,8 +510,57 @@ if ($user->canEdit()) {
 
     } // end for-loop
 
-    echo '</div>'; // close div class="basic-profile-standard-field-wrapper"
-    echo '<div class="basic-profile-social-media-wrapper col-md-6 col-xs-12">'; // container for css styling, used to group profile content and display them seperately from other fields
+    echo '</div></div>'; // close div class="basic-profile-standard-field-wrapper"
+    echo '<div class="row mrgn-tp-md">';
+    echo '<div class="col-sm-10 col-sm-offset-2">';
+    foreach($new_address as $field) {
+        $field = strtolower($field);
+        $value = htmlspecialchars_decode($user->get($field));
+
+        echo "<div class='form-group col-xs-6 {$field}'>";
+        
+        if ($field == 'postalcode') {
+            $params = array(
+                'name' => $field,
+                'id' => $field,
+                'class' => 'gcconnex-basic-'.$field,
+                'value' => $value,
+                'pattern' => '[ABCEGHJKLMNPRSTVXY][0-9][ABCEGHJKLMNPRSTVWXYZ] ?[0-9][ABCEGHJKLMNPRSTVWXYZ][0-9]',
+            );
+        } else {
+            $params = array(
+                'name' => $field,
+                'id' => $field,
+                'class' => 'gcconnex-basic-'.$field,
+                'value' => $value,
+            );
+        }
+
+        // set up label and input field for the basic profile stuff
+        echo "<label for='{$field}' class='col-sm-4'>" . elgg_echo("gcconnex_profile:basic:{$field}")."</label>";
+        echo '<div class="col-sm-8">'; // field wrapper for css styling
+        echo '<div class="input-group">';
+        echo '<span class="input-group-addon" style="float:none;">S</span>';
+        echo elgg_view("input/text", $params);
+        echo '</div>';
+        echo '</div></div>';
+    }
+    echo '</div>';
+    echo '</div>';
+    echo '<div class="col-sm-5 col-sm-offset-2">';
+    echo '<label for="location" class="col-sm-4">' . elgg_echo("gcconnex_profile:basic:location") .'</label>';
+    echo '<div class="col-sm-8">';
+    echo elgg_view("input/text", array(
+        'name'=> 'location',
+        'id' => 'location',
+        'class' => 'gcconnex-basic-location',
+        'value' => htmlspecialchars_decode($user->get('location')),
+    ));
+    echo '</div>';
+    echo '</div>';
+    echo '</div>';
+    echo '<h3>WIP SOCIALS</h3>';
+    echo '<div class="basic-profile-social-media-wrapper col-md-12 col-xs-12">'; // container for css styling, used to group profile content and display them seperately from other fields
 
     // pre-populate the social media fields and their prepended link for user profiles
 
@@ -476,7 +577,7 @@ if ($user->canEdit()) {
 
     foreach ($fields as $field => $field_link) { // create a label and input box for each social media field on the basic profile
 
-        echo '<div class="basic-profile-field-wrapper social-media-field-wrapper">'; //field wrapper for css styling
+        echo '<div class="basic-profile-field-wrapper social-media-field-wrapper col-md-6">'; //field wrapper for css styling
 
         $field = str_replace(' ', '-', $field); // create a css friendly version of the section name
         $field = strtolower($field);
@@ -519,7 +620,6 @@ if ($user->canEdit()) {
 
     </div>
             <div class="panel-footer text-right profile-edit-footer">
-                <a href="'.elgg_get_site_url(). 'avatar/edit/' . $user->username.'" class="btn btn-primary pull-left">'. elgg_echo('gcconnex_profile:profile:edit_avatar') .'</a>
                 <button type="button" class="btn btn-default overlay-close" style="background-color: #eaebed;">' . elgg_echo('gcconnex_profile:cancel') . '</button>
                 <button type="button" class="btn btn-primary save-profile">' . elgg_echo('gcconnex_profile:basic:save') . '</button>
             </div>
