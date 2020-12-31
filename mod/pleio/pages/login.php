@@ -1,5 +1,4 @@
 <?php
-
 require_once(dirname(__FILE__) . "/../vendor/autoload.php");
 
 $auth = elgg_get_plugin_setting('auth', 'pleio');
@@ -28,7 +27,7 @@ if (!$auth || !$auth_client || !$auth_secret || !$auth_url) {
 
 if ($auth == 'oidc') {
     $oidc = new Jumbojett\OpenIDConnectClient($auth_url . 'openid', $auth_client, $auth_secret);
-    $oidc->addScope(array('openid', 'profile', 'email'));
+    $oidc->addScope(array('openid', 'profile', 'email', 'phone', 'address'));
 
     try {
         $oidc->authenticate();
@@ -41,6 +40,10 @@ if ($auth == 'oidc') {
     $name = $oidc->requestUserInfo('name');
     $email = $oidc->requestUserInfo('email');
     $username = $oidc->requestUserInfo('nickname');
+    $address = $oidc->requestUserInfo('address');
+    $phone = $oidc->requestUserInfo('phone_number');
+
+    $picture = $oidc->requestUserInfo('picture');
 
     $user = get_user_by_pleio_guid_or_email($userid, $email);
     $allow_registration = elgg_get_config("allow_registration");
@@ -100,6 +103,22 @@ if ($auth == 'oidc') {
 
         if ($user->email !== $email) {
             $user->email = $email;
+        }
+
+        if ($address) {
+            $decoded_address = json_decode($address, true);
+            $full_address = $full_address['street_address'] . ' ' . $full_address['locality'] . ' ' . $full_address['region'] . ' ' . $full_address['postal_code'] . ' ' . $full_address['country'];
+            if($user->location !== $full_address) {
+                $user->location = $full_address;
+            }
+        }
+
+        if ($user->mobile !== $phone) {
+            $user->mobile = $phone;
+        }
+
+        if($picture && $user->avatar !== $picture){
+            $user->avatar = $picture;
         }
         
         system_message(elgg_echo('wet:loginok', array($user->name)));
